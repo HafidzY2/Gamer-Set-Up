@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Hub - Game Booster & Test Ping</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --primary-color: #00e5ff;
+            --bg-dark: #0f172a;
+            --card-dark: #1e293b;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: #e2e8f0;
+            transition: background-color 0.3s ease;
+        }
+
+        /* Mode Gelap */
+        body.dark-mode {
+            background-color: var(--bg-dark);
+            color: #e2e8f0;
+        }
+
+        /* Mode Terang */
+        body.light-mode {
+            background-color: #f1f5f9;
+            color: #1e293b;
+        }
+
+        .light-mode .bg-card {
+            background-color: #ffffff;
+            color: #1e293b;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .light-mode .text-neon {
+            color: #0077b6;
+        }
+
+        .light-mode .border-neon {
+            border-color: #0077b6;
+        }
+        
+        .light-mode #boost-button {
+            background: linear-gradient(45deg, #0077b6, #00b4d8);
+        }
+
+        .light-mode #mode-toggle-button {
+            background-color: #f1f5f9;
+            color: #1e293b;
+        }
+
+        .light-mode .bg-dark {
+            background-color: #e2e8f0;
+        }
+
+        .light-mode .bg-primary {
+            background-color: #48cae4;
+        }
+        
+        .text-neon {
+            color: var(--primary-color);
+            text-shadow: 0 0 5px var(--primary-color), 0 0 10px var(--primary-color);
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .border-neon {
+            border: 2px solid var(--primary-color);
+            box-shadow: 0 0 8px var(--primary-color);
+        }
+
+        .bg-card {
+            background-color: var(--card-dark);
+        }
+
+        #boost-button {
+            background: linear-gradient(45deg, #00aaff, #00e5ff);
+            box-shadow: 0 0 15px #00aaff;
+            transition: all 0.3s ease;
+        }
+
+        #boost-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 25px #00e5ff;
+        }
+
+        .ping-line, .jitter-line, .loss-line, .fps-line {
+            transition: stroke-dashoffset 0.5s ease-in-out;
+        }
+
+        .notification {
+            transform: translateY(100%);
+            transition: transform 0.5s ease-out;
+        }
+
+        .notification.show {
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body class="dark-mode">
+
+    <!-- Notifikasi Pop-up -->
+    <div id="notification-area" class="fixed bottom-4 right-4 z-50 flex flex-col items-end space-y-2"></div>
+
+    <div class="min-h-screen flex flex-col items-center p-4 md:p-8">
+        <!-- Header -->
+        <header class="w-full max-w-5xl flex justify-between items-center py-4 px-2 mb-8">
+            <h1 class="text-3xl md:text-4xl text-neon">Game Hub</h1>
+            <button id="mode-toggle-button" class="p-2 rounded-full transition-colors duration-300">
+                <svg id="sun-icon" class="h-6 w-6 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                <svg id="moon-icon" class="h-6 w-6 text-gray-500 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+            </button>
+        </header>
+
+        <main class="w-full max-w-5xl space-y-8">
+            
+            <!-- Widget Mini Booster -->
+            <div class="relative w-full flex justify-center -mt-16 mb-8">
+                <button id="mini-booster-button" class="p-4 px-8 rounded-full bg-slate-700 hover:bg-slate-600 text-sm font-semibold transition-all duration-300 transform hover:scale-105">
+                    🚀 Boost Game Sekarang
+                </button>
+            </div>
+
+            <!-- Dashboard Utama -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                
+                <!-- Test Ping -->
+                <div class="lg:col-span-2 bg-card p-6 rounded-2xl border-neon">
+                    <h2 class="text-xl md:text-2xl font-bold mb-4 text-neon">Test Ping Super Akurat</h2>
+                    <div class="flex flex-col md:flex-row justify-around items-center text-center space-y-4 md:space-y-0">
+                        <div>
+                            <p class="text-sm uppercase text-gray-400">Ping</p>
+                            <span id="ping-value" class="text-3xl md:text-4xl font-bold text-neon">0</span><span class="text-gray-400">ms</span>
+                        </div>
+                        <div>
+                            <p class="text-sm uppercase text-gray-400">Jitter</p>
+                            <span id="jitter-value" class="text-3xl md:text-4xl font-bold text-neon">0</span><span class="text-gray-400">ms</span>
+                        </div>
+                        <div>
+                            <p class="text-sm uppercase text-gray-400">Packet Loss</p>
+                            <span id="loss-value" class="text-3xl md:text-4xl font-bold text-neon">0</span><span class="text-gray-400">%</span>
+                        </div>
+                    </div>
+                    <div class="mt-6 h-48 relative">
+                        <canvas id="ping-chart" class="w-full h-full"></canvas>
+                        <div class="absolute inset-0 flex justify-center items-center text-center opacity-0 transition-opacity duration-300" id="loading-overlay">
+                            <span class="text-xl text-neon">Memulai...</span>
+                        </div>
+                    </div>
+                    <button id="start-ping-test" class="w-full mt-6 py-3 rounded-xl bg-primary text-black font-semibold text-lg transition-colors duration-300">Mulai Test Ping</button>
+                    <p id="ping-message" class="mt-4 text-center italic text-gray-400"></p>
+                </div>
+
+                <!-- FPS Monitor & Booster -->
+                <div class="lg:col-span-1 bg-card p-6 rounded-2xl border-neon flex flex-col justify-between">
+                    <div>
+                        <h2 class="text-xl md:text-2xl font-bold mb-4 text-neon">FPS Monitor</h2>
+                        <div class="flex justify-center items-center mb-6 space-x-4">
+                            <span id="fps-value" class="text-5xl font-bold text-neon">0</span>
+                            <span class="text-xl text-gray-400">FPS</span>
+                        </div>
+                        <div class="relative w-full h-2 bg-slate-700 rounded-full overflow-hidden">
+                            <div id="fps-bar" class="absolute h-full bg-green-500 rounded-full transition-all duration-300" style="width: 0%;"></div>
+                        </div>
+                        <p id="fps-message" class="mt-4 text-center italic text-gray-400">Frame rate stabil.</p>
+                    </div>
+
+                    <div class="mt-8 text-center">
+                        <h2 class="text-2xl md:text-3xl font-bold mb-4 text-neon">Game Booster</h2>
+                        <button id="boost-button" class="py-4 px-12 rounded-full text-white font-bold text-xl uppercase">
+                            BOOST GAME
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="w-full max-w-5xl text-center py-8 mt-8 text-sm text-gray-500">
+            Dibuat dengan ❤️ untuk para Gamer. © 2024 Game Hub.
+        </footer>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const pingValueEl = document.getElementById('ping-value');
+            const jitterValueEl = document.getElementById('jitter-value');
+            const lossValueEl = document.getElementById('loss-value');
+            const pingMessageEl = document.getElementById('ping-message');
+            const startPingButton = document.getElementById('start-ping-test');
+            const loadingOverlay = document.getElementById('loading-overlay');
+            const boostButton = document.getElementById('boost-button');
+            const miniBoosterButton = document.getElementById('mini-booster-button');
+            const fpsValueEl = document.getElementById('fps-value');
+            const fpsBarEl = document.getElementById('fps-bar');
+            const fpsMessageEl = document.getElementById('fps-message');
+            const notificationArea = document.getElementById('notification-area');
+            const modeToggleButton = document.getElementById('mode-toggle-button');
+            const bodyEl = document.body;
+            const sunIcon = document.getElementById('sun-icon');
+            const moonIcon = document.getElementById('moon-icon');
+
+            let pingChart;
+            let pingData = [];
+            let pingLabels = [];
+            let pingIntervalId = null;
+            let fpsIntervalId = null;
+            
+            // Variabel untuk sistem notifikasi baru
+            let notificationQueue = [];
+            let isNotificationShowing = false;
+
+            let isDarkMode = true;
+
+            // Fungsi untuk menampilkan notifikasi satu per satu
+            const displayNotification = (message, type) => {
+                isNotificationShowing = true;
+                const notification = document.createElement('div');
+                let icon = '';
+                let bgColor = '';
+                
+                switch(type) {
+                    case 'success':
+                        icon = '✅';
+                        bgColor = 'bg-green-600';
+                        break;
+                    case 'warning':
+                        icon = '⚠️';
+                        bgColor = 'bg-yellow-500';
+                        break;
+                    case 'alert':
+                        icon = '🚨';
+                        bgColor = 'bg-red-600';
+                        break;
+                    case 'info':
+                        icon = '⏳';
+                        bgColor = 'bg-blue-600';
+                        break;
+                    default:
+                        icon = '';
+                        bgColor = 'bg-gray-600';
+                }
+
+                notification.className = `notification p-4 rounded-lg shadow-lg flex items-center space-x-3 text-white ${bgColor} transition-transform duration-500 transform relative`;
+                notification.innerHTML = `
+                    <div class="text-xl">${icon}</div>
+                    <div>${message}</div>
+                    <button class="absolute top-2 right-2 text-gray-300 hover:text-white text-lg font-bold">x</button>
+                `;
+                
+                notificationArea.appendChild(notification);
+                setTimeout(() => {
+                    notification.classList.add('show');
+                }, 10);
+
+                // Tambahkan event listener untuk tombol tutup
+                const closeButton = notification.querySelector('button');
+                closeButton.addEventListener('click', () => {
+                    hideNotification(notification);
+                });
+
+                // Notifikasi akan hilang otomatis setelah 5 detik
+                setTimeout(() => {
+                    hideNotification(notification);
+                }, 5000);
+            };
+
+            // Fungsi untuk menyembunyikan notifikasi
+            const hideNotification = (notification) => {
+                if (notification) {
+                    notification.classList.remove('show');
+                    setTimeout(() => {
+                        notification.remove();
+                        isNotificationShowing = false;
+                        processNotificationQueue();
+                    }, 500);
+                }
+            };
+            
+            // Fungsi untuk memproses antrean notifikasi
+            const processNotificationQueue = () => {
+                if (notificationQueue.length > 0 && !isNotificationShowing) {
+                    const nextNotification = notificationQueue.shift();
+                    displayNotification(nextNotification.message, nextNotification.type);
+                }
+            };
+
+            // Fungsi utama untuk menambahkan notifikasi ke antrean
+            const showNotification = (message, type) => {
+                if (isNotificationShowing) {
+                    notificationQueue.push({ message, type });
+                } else {
+                    displayNotification(message, type);
+                }
+            };
+
+            // Fungsi simulasi Test Ping
+            const startPingTest = () => {
+                if (pingIntervalId) {
+                    clearInterval(pingIntervalId);
+                }
+                
+                pingData = [];
+                pingLabels = [];
+                let i = 0;
+                
+                startPingButton.textContent = 'Menguji...';
+                startPingButton.disabled = true;
+                loadingOverlay.classList.remove('opacity-0');
+                pingMessageEl.textContent = 'Memulai pengujian...';
+                showNotification('Memulai tes ping...', 'info');
+
+                pingIntervalId = setInterval(() => {
+                    const ping = Math.floor(Math.random() * 80) + 20; // 20-100ms
+                    const jitter = Math.floor(Math.random() * 15); // 0-15ms
+                    const loss = Math.random() < 0.05 ? 1 : 0; // 5% chance of 1% loss
+
+                    pingValueEl.textContent = ping;
+                    jitterValueEl.textContent = jitter;
+                    lossValueEl.textContent = loss;
+
+                    pingData.push(ping);
+                    pingLabels.push(i);
+                    i++;
+
+                    if (pingData.length > 30) {
+                        pingData.shift();
+                        pingLabels.shift();
+                    }
+
+                    pingChart.update();
+
+                    // Notifikasi Ping
+                    if (ping > 80) {
+                        showNotification('🚨 Ping melonjak tinggi! Coba ganti jaringan WiFi/Data.', 'alert');
+                    } else if (ping > 50) {
+                        showNotification('⚠️ Ping tinggi, pengalaman bermain bisa terganggu.', 'warning');
+                    } else {
+                        showNotification('✅ Ping stabil, aman untuk bermain.', 'success');
+                    }
+                    
+                    if (loss > 0) {
+                        showNotification('🚨 Packet loss terdeteksi, koneksi tidak stabil.', 'alert');
+                    }
+
+                    if (i >= 20) {
+                        clearInterval(pingIntervalId);
+                        startPingButton.textContent = 'Mulai Ulang Test';
+                        startPingButton.disabled = false;
+                        loadingOverlay.classList.add('opacity-0');
+                        pingMessageEl.textContent = 'Pengujian selesai. Data stabil.';
+                        showNotification('✅ Pengujian selesai! Performa koneksi optimal.', 'success');
+                    }
+                }, 1000);
+            };
+
+            // Fungsi simulasi FPS Monitor
+            const startFpsMonitor = () => {
+                let currentFps = 60;
+                fpsIntervalId = setInterval(() => {
+                    const dropChance = Math.random();
+                    if (dropChance < 0.1) {
+                        currentFps = Math.max(20, currentFps - Math.floor(Math.random() * 15));
+                        showNotification('⏳ FPS drop terdeteksi, hentikan aplikasi lain untuk performa maksimal.', 'info');
+                    } else if (dropChance < 0.3) {
+                        currentFps = Math.min(60, currentFps + Math.floor(Math.random() * 10));
+                    }
+                    
+                    fpsValueEl.textContent = currentFps;
+                    const fpsPercentage = Math.min(100, (currentFps / 60) * 100);
+                    fpsBarEl.style.width = `${fpsPercentage}%`;
+                    fpsBarEl.style.backgroundColor = currentFps < 30 ? '#ef4444' : currentFps < 50 ? '#f97316' : '#22c55e';
+
+                    if (currentFps < 30) {
+                        fpsMessageEl.textContent = 'FPS rendah, performa terganggu.';
+                    } else if (currentFps < 50) {
+                        fpsMessageEl.textContent = 'FPS sedang, bisa dioptimalkan.';
+                    } else {
+                        fpsMessageEl.textContent = 'Frame rate stabil.';
+                    }
+
+                }, 1000);
+            };
+
+            // Fungsi Booster
+            const boostGame = () => {
+                boostButton.textContent = 'Meningkatkan...';
+                boostButton.disabled = true;
+                showNotification('🚀 Game Booster aktif! Mengoptimalkan perangkat...', 'success');
+                setTimeout(() => {
+                    boostButton.textContent = 'BOOST GAME';
+                    boostButton.disabled = false;
+                    showNotification('✅ Performa optimal! Semua sistem siap!', 'success');
+                }, 2000);
+            };
+            
+            // Fungsi Toggle Mode
+            const toggleMode = () => {
+                isDarkMode = !isDarkMode;
+                if (isDarkMode) {
+                    bodyEl.classList.remove('light-mode');
+                    bodyEl.classList.add('dark-mode');
+                    sunIcon.classList.remove('hidden');
+                    moonIcon.classList.add('hidden');
+                } else {
+                    bodyEl.classList.remove('dark-mode');
+                    bodyEl.classList.add('light-mode');
+                    sunIcon.classList.add('hidden');
+                    moonIcon.classList.remove('hidden');
+                }
+            };
+
+
+            // Inisialisasi Chart.js
+            const ctx = document.getElementById('ping-chart').getContext('2d');
+            pingChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: pingLabels,
+                    datasets: [{
+                        label: 'Ping (ms)',
+                        data: pingData,
+                        borderColor: 'rgba(0, 229, 255, 1)',
+                        backgroundColor: 'rgba(0, 229, 255, 0.2)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 120,
+                            ticks: {
+                                color: '#a0aec0'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)',
+                                borderColor: '#334155'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#a0aec0',
+                                display: false
+                            },
+                            grid: {
+                                display: false,
+                                borderColor: '#334155'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${context.raw}ms`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Event Listeners
+            startPingButton.addEventListener('click', startPingTest);
+            boostButton.addEventListener('click', boostGame);
+            miniBoosterButton.addEventListener('click', boostGame);
+            modeToggleButton.addEventListener('click', toggleMode);
+
+            // Inisialisasi awal FPS monitor
+            startFpsMonitor();
+        });
+    </script>
+</body>
+</html>
